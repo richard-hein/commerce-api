@@ -1,6 +1,7 @@
 package com.richard.commerce_api.catalog.dto.response;
 
 import com.richard.commerce_api.catalog.entity.Product;
+import com.richard.commerce_api.category.entity.Category;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -12,11 +13,15 @@ public record ProductResponse(
  String description,
  String sku,
  BigDecimal price,
- boolean active
+ boolean active,
+ UUID categoryId,
+ String categoryName
 ) {
     public static ProductResponse from(Product product){
 //        it returns the original non-null reference, or throws NullPointerException otherwise.
         Objects.requireNonNull(product, "Product cannot be null");
+
+        Category category = product.getCategory();
 
         return new ProductResponse(
                 product.getId(),
@@ -24,7 +29,10 @@ public record ProductResponse(
                 product.getDescription(),
                 product.getSku(),
                 product.getPrice(),
-                product.isActive()
+                product.isActive(),
+                category != null ? category.getId() : null,
+                category != null ?category.getName() : null
+
         );
     }
 }

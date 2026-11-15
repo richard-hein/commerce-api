@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -66,16 +67,44 @@ public class Product {
         Product product = new Product();
 
             product.name = name.trim();
-            product.description = description.trim();
-            product.sku = sku;
+            product.description = description == null ? null : description.trim();
+            product.sku = sku.trim();
             product.price = price;
        return product;
 
 
     }
 
+    public void update(
+            String name,
+            String description,
+            String sku,
+            BigDecimal price
+    ){
+        if(name == null || name.isBlank()){
+            throw new IllegalArgumentException("Product name is required");
+        }
+
+        if(sku == null || sku.isBlank()) {
+            throw new IllegalArgumentException("Sku is required");
+        }
+
+        if(price == null || price.signum() <0) {
+            throw new IllegalArgumentException("Price must be zero or greater");
+        }
+
+        this.name = name.trim();
+        this.description = description == null ? null : description.trim();
+        this.sku = sku.trim();
+        this.price = price;
+    }
+
     public void assignCategory(Category category) {
-       this.category = category;
+        this.category = Objects.requireNonNull(
+                category,
+                "Product category is required"
+        );
+
     }
 
     @PrePersist

@@ -1,6 +1,7 @@
 package com.richard.commerce_api.catalog.controller;
 
 import com.richard.commerce_api.catalog.dto.request.CreateProductRequest;
+import com.richard.commerce_api.catalog.dto.request.UpdateProductRequest;
 import com.richard.commerce_api.catalog.dto.response.ProductResponse;
 import com.richard.commerce_api.catalog.entity.Product;
 import com.richard.commerce_api.catalog.service.ProductService;
@@ -29,14 +30,9 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal maxPrice,
             Pageable pageable) {
 
-        Page<Product> products =productService.searchProducts(
-                name,
-                minPrice,
-                maxPrice,
-                pageable
+        Page<ProductResponse> response = productService.searchProducts(
+                name,minPrice,maxPrice, pageable
         );
-
-        Page<ProductResponse> response = products.map((ProductResponse::from));
 
         return ResponseEntity.ok(response);
 
@@ -46,22 +42,42 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProductById(@PathVariable UUID id){
-        Product product = productService.getProduct(id);
-        return ResponseEntity.ok()
-                .body(ProductResponse.from(product));
+        return ResponseEntity.ok(productService.getProduct(id));
+
     }
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request){
-        Product product = productService.createProduct(
+        return ResponseEntity.ok(productService.createProduct(
                 request.name(),
                 request.description(),
                 request.sku(),
-                request.price()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ProductResponse.from(product));
+                request.price(),
+                request.categoryId()
+        ));
 
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponse> updateProduct(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateProductRequest request
+    ){
+        return ResponseEntity.ok(productService.updateProduct(
+                id,
+                request.name(),
+                request.description(),
+                request.sku(),
+                request.price(),
+                request.categoryId()
+        ));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id){
+        productService.deleteProduct(id);
+
+        return ResponseEntity.noContent().build();
     }
 
 }

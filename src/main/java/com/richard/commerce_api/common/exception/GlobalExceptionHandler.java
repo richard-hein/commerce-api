@@ -1,7 +1,11 @@
 package com.richard.commerce_api.common.exception;
 
+import com.richard.commerce_api.catalog.entity.Product;
+import com.richard.commerce_api.catalog.exception.ProductAlreadyExistsException;
 import com.richard.commerce_api.catalog.exception.ProductNotFoundException;
 import com.richard.commerce_api.category.exception.CategoryAlreadyExistsException;
+import com.richard.commerce_api.category.exception.CategoryInUseException;
+import com.richard.commerce_api.category.exception.CategoryNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +65,40 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 ex.getMessage()
         );
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(problemDetail);
+    }
+
+    @ExceptionHandler(ProductAlreadyExistsException.class)
+    public ResponseEntity<ProblemDetail> handleProductAlreadyExists(
+            ProductAlreadyExistsException ex
+    ){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(problemDetail);
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleCategoryNotFound(CategoryNotFoundException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(problemDetail);
+    }
+
+    @ExceptionHandler(CategoryInUseException.class)
+    public ResponseEntity<ProblemDetail> handleCategoryInUse(CategoryInUseException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(problemDetail);
     }

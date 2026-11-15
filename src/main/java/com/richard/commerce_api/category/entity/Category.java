@@ -64,6 +64,15 @@ public class Category {
         return category;
     }
 
+    public void update(String name, String description){
+        if(name==null || name.isBlank()){
+            throw new IllegalArgumentException("Category name is required");
+        }
+
+        this.name = name.trim();
+        this.description = description == null ? null : description.trim();
+    }
+
 
 
 

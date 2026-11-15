@@ -1,9 +1,14 @@
 package com.richard.commerce_api.catalog.service;
 
+import com.richard.commerce_api.catalog.dto.response.ProductResponse;
 import com.richard.commerce_api.catalog.entity.Product;
+import com.richard.commerce_api.catalog.exception.ProductAlreadyExistsException;
 import com.richard.commerce_api.catalog.exception.ProductNotFoundException;
 import com.richard.commerce_api.catalog.repository.ProductRepository;
 import com.richard.commerce_api.catalog.specification.ProductSpecification;
+import com.richard.commerce_api.category.entity.Category;
+import com.richard.commerce_api.category.exception.CategoryNotFoundException;
+import com.richard.commerce_api.category.repository.CategoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,15 +24,11 @@ import java.util.UUID;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
 
     @Transactional(readOnly = true)
-    public Page<Product> getProducts(Pageable pageable) {
-        return productRepository.findAll(pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Product> searchProducts(
+    public Page<ProductResponse> searchProducts(
             String name,
             BigDecimal minPrice,
             BigDecimal maxPrice,
@@ -57,29 +58,73 @@ public class ProductService {
             );
 
         }
-        return productRepository.findAll(spec, pageable);
+        return productRepository.findAll(spec, pageable)
+                .map(ProductResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public Product getProduct(UUID id){
-        return productRepository.findById(id)
+    public ProductResponse getProduct(UUID id){
+        Product product = productRepository.findById(id)
                 .orElseThrow(()->
                         new ProductNotFoundException(id));
+        return ProductResponse.from(product);
     }
 
     @Transactional
-    public Product createProduct(
+    public ProductResponse createProduct(
             String name,
             String description,
             String sku,
-            BigDecimal price
+            BigDecimal price,
+            UUID categoryId
     ) {
-        Product product =Product.create(name,description,sku, price);
-        return productRepository.save(product);
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(()-> new CategoryNotFoundException(categoryId));
+
+        String normalizedSku = sku.trim();
+        if(productRepository.existsBySku(normalizedSku)){
+            throw new ProductAlreadyExistsException(normalizedSku);
+        }
+
+        Product product =Product.create(name,description,normalizedSku, price);
+        product.assignCategory(category);
+
+        Product savedProduct = productRepository.save(product);
+        return ProductResponse.from(savedProduct);
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(
+            UUID id,
+            String name,
+            String description,
+            String sku,
+            BigDecimal price,
+            UUID categoryId
+    ) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(()-> new ProductNotFoundException(id));
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(()-> new CategoryNotFoundException(categoryId));
+
+        String normalizedSku = sku.trim();
+        if(productRepository.existsBySkuAndIdNot(normalizedSku, id)){
+            throw new ProductAlreadyExistsException(normalizedSku);
+        }
+
+        product.update(name, description, normalizedSku, price);
+        product.assignCategory(category);
+        return ProductResponse.from(product);
+    }
+
+    @Transactional
+    public void deleteProduct(UUID id){
+        Product product = productRepository.findById(id)
+                .orElseThrow(()-> new ProductNotFoundException(id));
+
+        productRepository.delete(product);
     }
 
 
-//    public Product createProduct(@Valid CreateProductRequest productRequest) {
-//        return null;
-//    }
 }
